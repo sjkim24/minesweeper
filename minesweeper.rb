@@ -66,6 +66,11 @@ class Player
     index_input.map! { |index| index.to_i }
   end
 
+  def get_action
+    puts "F to place a flag, R to reveal square."
+    action_input = gets.chomp
+  end
+
 end
 
 class Game
@@ -92,7 +97,17 @@ class Game
   def run
     until won?
       display
+
       index_array = player.get_position
+      action_input = player.get_action
+
+      if action_input.downcase == "f"
+        game_board[index_array].flag == true ? false : true
+      elsif action_input.downcase == "r"
+      else
+        puts "Wrong input"
+        next
+      end
 
       game_over? if check_position(index_array) == 1 && game_board[index_array].bomb
     end
@@ -134,9 +149,9 @@ class Game
         game_board[index_array].reveal = true
         neighbors.each { |neighbor| check_position(neighbor) }
       end
-      
+
       byebug
-      reveal_counter += 1
+      @reveal_counter += 1
     end
   end
 
@@ -155,10 +170,10 @@ class Game
   def render
     game_board.board.map do |array|
       array.map do |tile|
-        if tile.reveal == false
-          tile = :x
-        elsif tile.flag
+        if tile.flag
           tile = :f
+        elsif tile.reveal == false
+          tile = :x
         elsif tile.reveal && tile.bomb
           tile = :b
         elsif tile.value > 0

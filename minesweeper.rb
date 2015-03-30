@@ -46,18 +46,63 @@ class TileNode
 
 end
 
+class Player
+
+  attr_reader :name
+
+  def initialize(name)
+    @name = name
+  end
+
+  def get_position
+    puts "What position would you like to choose? Please put space between indices."
+    index_input = gets.chomp.split(" ")
+    index_input.map! { |index| index.to_i }
+  end
+
+end
 
 class Game
 
-  attr_accessor :game_board, :master_board
+  attr_accessor :game_board, :master_board, :player
 
-  def initialize
+  def initialize(player)
     @game_board = Array.new(9) { Array.new(9) }
     @master_board = Board.new.board
+    @player = Player.new(player)
+  end
+
+  def run
+    until won?
+      index_array = player.get_position
+
+      check_position(index_array)
+
+      merge_boards
+      display
+    end
+  end
+
+  def check_position(index_array)
+    row, col = index_array
+
+    if master_board[row][col].reveal == true
+      puts "This position is already revealed."
+    elsif master_board[row][col].bomb == true
+      puts "This is a bomb"
+    elsif
+
+    end
   end
 
   def display
-    @game_board.each_with_index do |array, idx1|
+    game_board.each do |array|
+      puts array
+    end
+  end
+
+  def merge_boards
+    game_board.each_with_index do |array, idx1|
       array.each_with_index do |node, idx2|
         if master_board[idx1][idx2].reveal == true && master_board[idx1][idx2].bomb == true
           game_board[idx1][idx2] = :b
@@ -70,6 +115,19 @@ class Game
         end
       end
     end
-  end
 
+  #   For better visual display, mess with visual indices
+  #
+  #   game_board.each_with_index do |array, idx|
+  #     array[0] = (idx).to_s
+  #   end
+  #
+  #   game_board[0].each_with_index do |el, idx|
+  #     game_board[-1][idx] = (idx + 1).to_s
+  #   end
+
+  end
 end
+
+game = Game.new('SJ')
+game.run

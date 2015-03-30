@@ -32,6 +32,11 @@ class Board
     end
   end
 
+  def [](pos)
+    row, col = pos
+    booard[row][col]
+  end
+
 end
 
 class TileNode
@@ -83,16 +88,16 @@ class Game
     @player = Player.new(player)
   end
 
-  # def run
-  #   until won?
-  #     index_array = player.get_position
-  #
-  #     check_position(index_array)
-  #
-  #     merge_boards
-  #     display
-  #   end
-  # end
+  def run
+    until false
+      index_array = player.get_position
+
+      game_over if check_position(index_array) == 1 && master_board[row][col].bomb == true
+
+      merge_boards
+      display
+    end
+  end
 
   def check_position(index_array)
     row, col = index_array
@@ -100,8 +105,12 @@ class Game
     if master_board[row][col].reveal == true
       puts "This position is already revealed."
     elsif master_board[row][col].bomb == true
-      puts "This is a bomb."
-    elsif master_board[row][col].reveal == false
+      return 1
+    elsif master_board[row][col].reveal == false && neighbor has bomb
+
+      return bomb_count
+
+    elsif
       master_board[row][col].reveal = true
       neighbors = create_neighbors(row, col)
 

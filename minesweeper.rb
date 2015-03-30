@@ -2,12 +2,18 @@ require 'byebug'
 
 class Board
 
-  attr_accessor :board
+  attr_accessor :board, :bomb_indices
 
   def initialize
     @board = Array.new(9) { Array.new(9) }
+    @bomb_indices = []
     set_board_positions_to_tile_nodes
     plant_bombs
+  end
+
+  def [](pos)
+    row, col = pos
+    board[row][col]
   end
 
   def set_board_positions_to_tile_nodes
@@ -19,23 +25,18 @@ class Board
   end
 
   def plant_bombs
-    bomb_indices = []
-
     until bomb_indices.length == 10
       col = rand(0..8)
       row = rand(0..8)
       pos = [row, col]
 
-      bomb_indices << pos unless bomb_indices.include?(pos)
-
-      @board[col][row].bomb = true
+      unless bomb_indices.include?(pos)
+        bomb_indices << pos
+        board[pos[0]][pos[1]].bomb = true
+      end
     end
   end
 
-  def [](pos)
-    row, col = pos
-    board[row][col]
-  end
 end
 
 class TileNode
@@ -89,21 +90,26 @@ class Game
   end
 
   def run
-    until false
+    until won?
+      display
       index_array = player.get_position
 
       game_over? if check_position(index_array) == 1 && game_board[index_array].bomb
-      display
     end
+
+    puts "Congrats, you found all the mines."
   end
 
-  def win?
-    game_board.count
-
+  def won?
+    reveal_counter == 71
   end
 
   def game_over?
     puts "You lose"
+    game_board.bomb_indices.each do |bombs|
+      game_board[bombs].reveal = true
+    end
+    display
   end
 
   def check_position(index_array)
@@ -128,6 +134,9 @@ class Game
         game_board[index_array].reveal = true
         neighbors.each { |neighbor| check_position(neighbor) }
       end
+      
+      byebug
+      reveal_counter += 1
     end
   end
 

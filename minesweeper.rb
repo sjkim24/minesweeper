@@ -34,9 +34,8 @@ class Board
 
   def [](pos)
     row, col = pos
-    booard[row][col]
+    board[row][col]
   end
-
 end
 
 class TileNode
@@ -80,11 +79,10 @@ class Game
     [1, 1]
   ]
 
-  attr_accessor :game_board, :master_board, :player
+  attr_accessor :game_board, :player
 
   def initialize(player)
-    @game_board = Array.new(9) { Array.new(9) }
-    @master_board = Board.new.board
+    @game_board = Board.new
     @player = Player.new(player)
   end
 
@@ -92,26 +90,18 @@ class Game
     until false
       index_array = player.get_position
 
-      game_over if check_position(index_array) == 1 && master_board[row][col].bomb == true
+      game_over if check_position(index_array) == 1 && game_board[index_array].bomb
 
-      merge_boards
-      display
     end
   end
 
   def check_position(index_array)
-    row, col = index_array
 
-    if master_board[row][col].reveal == true
+    if game_board[index_array].reveal
       puts "This position is already revealed."
-    elsif master_board[row][col].bomb == true
+    elsif game_board[index_array].bomb
       return 1
-    elsif master_board[row][col].reveal == false && neighbor has bomb
-
-      return bomb_count
-
-    elsif
-      master_board[row][col].reveal = true
+    elsif game_board[index_array].reveal
       neighbors = create_neighbors(row, col)
 
       neighbors.each do |neighbor|
@@ -132,37 +122,36 @@ class Game
     end
   end
 
-  def display
-    game_board.each do |array|
-      puts array
-    end
+  def render
+    #byebug
+    game_board.board.map do |array|
+      array.map do |tile|
+        if tile.reveal == false
+          tile = :x
+        elsif tile.flag
+          tile = :f
+        elsif tile.reveal && tile.bomb
+          tile = :b
+        else
+          tile = :o
+        end
+      end.join(" ")
+    end.join("\n")
   end
 
-  def merge_boards
-    game_board.each_with_index do |array, idx1|
-      array.each_with_index do |node, idx2|
-        if master_board[idx1][idx2].reveal == true && master_board[idx1][idx2].bomb == true
-          game_board[idx1][idx2] = :b
-        elsif master_board[idx1][idx2].reveal == true
-          game_board[idx1][idx2] = :o
-        elsif master_board[idx1][idx2].flag == true && master_board[idx1][idx2].reveal == false
-          game_board[idx1][idx2] = :f
-        elsif master_board[idx1][idx2].reveal == false
-          game_board[idx1][idx2] = :x
-        end
-      end
-    end
+  def display
+    puts render
   end
+
+  def my_map(&prc)
+    new_array = []
+    self.each do |el|
+      new_array << prc.call(el)
+    end
+    new_array
+  end
+
 end
-  #   For better visual display, mess with visual indices
-  #
-  #   game_board.each_with_index do |array, idx|
-  #     array[0] = (idx).to_s
-  #   end
-  #
-  #   game_board[0].each_with_index do |el, idx|
-  #     game_board[-1][idx] = (idx + 1).to_s
-  #   end
 
 game = Game.new('SJ')
 #game.run

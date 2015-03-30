@@ -1,3 +1,5 @@
+require 'byebug'
+
 class Board
 
   attr_accessor :board
@@ -28,7 +30,6 @@ class Board
 
       @board[col][row].bomb = true
     end
-
   end
 
 end
@@ -42,7 +43,6 @@ class TileNode
     @bomb = false
     @flag = false
   end
-
 
 end
 
@@ -64,6 +64,17 @@ end
 
 class Game
 
+  NEIGHBORS = [
+    [-1, -1],
+    [-1, 0],
+    [-1, 1],
+    [0, -1],
+    [0, 1],
+    [1, -1],
+    [1, 0],
+    [1, 1]
+  ]
+
   attr_accessor :game_board, :master_board, :player
 
   def initialize(player)
@@ -72,16 +83,16 @@ class Game
     @player = Player.new(player)
   end
 
-  def run
-    until won?
-      index_array = player.get_position
-
-      check_position(index_array)
-
-      merge_boards
-      display
-    end
-  end
+  # def run
+  #   until won?
+  #     index_array = player.get_position
+  #
+  #     check_position(index_array)
+  #
+  #     merge_boards
+  #     display
+  #   end
+  # end
 
   def check_position(index_array)
     row, col = index_array
@@ -89,9 +100,26 @@ class Game
     if master_board[row][col].reveal == true
       puts "This position is already revealed."
     elsif master_board[row][col].bomb == true
-      puts "This is a bomb"
-    elsif
+      puts "This is a bomb."
+    elsif master_board[row][col].reveal == false
+      master_board[row][col].reveal = true
+      neighbors = create_neighbors(row, col)
 
+      neighbors.each do |neighbor|
+        check_position(neighbor)
+      end
+    end
+  end
+
+  def create_neighbors(row, col)
+    neighbor_array = Array.new(8) { Array.new(2) }
+
+    NEIGHBORS.each_with_index do |arr, idx|
+      neighbor_array[idx] = [arr[0] + row, arr[1] + col]
+    end
+
+    neighbor_array.select do |arr|
+      arr.all? { |el| el >= 0 && el <= 8 }
     end
   end
 
@@ -107,7 +135,7 @@ class Game
         if master_board[idx1][idx2].reveal == true && master_board[idx1][idx2].bomb == true
           game_board[idx1][idx2] = :b
         elsif master_board[idx1][idx2].reveal == true
-          ngame_board[idx1][idx2] = :o
+          game_board[idx1][idx2] = :o
         elsif master_board[idx1][idx2].flag == true && master_board[idx1][idx2].reveal == false
           game_board[idx1][idx2] = :f
         elsif master_board[idx1][idx2].reveal == false
@@ -115,7 +143,8 @@ class Game
         end
       end
     end
-
+  end
+end
   #   For better visual display, mess with visual indices
   #
   #   game_board.each_with_index do |array, idx|
@@ -126,8 +155,5 @@ class Game
   #     game_board[-1][idx] = (idx + 1).to_s
   #   end
 
-  end
-end
-
 game = Game.new('SJ')
-game.run
+#game.run

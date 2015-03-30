@@ -2,10 +2,12 @@ require 'byebug'
 
 class Board
 
-  attr_accessor :board, :bomb_indices
+  attr_accessor :board, :bomb_indices, :board_size, :bomb_number
 
-  def initialize
-    @board = Array.new(9) { Array.new(9) }
+  def initialize(board_size, bomb_number)
+    @board_size = board_size
+    @bomb_number = bomb_number
+    @board = Array.new(board_size) { Array.new(board_size) }
     @bomb_indices = []
     set_board_positions_to_tile_nodes
     plant_bombs
@@ -25,9 +27,9 @@ class Board
   end
 
   def plant_bombs
-    until bomb_indices.length == 10
-      col = rand(0..8)
-      row = rand(0..8)
+    until bomb_indices.length == bomb_number
+      col = rand(0...board_size)
+      row = rand(0...board_size)
       pos = [row, col]
 
       unless bomb_indices.include?(pos)
@@ -67,8 +69,8 @@ class Player
   end
 
   def get_action
-    puts "F to place a flag, R to reveal square."
-    action_input = gets.chomp
+    puts "F to place a flag, R to reveal a square."
+    gets.chomp
   end
 
 end
@@ -86,10 +88,12 @@ class Game
     [1, 1]
   ]
 
-  attr_accessor :game_board, :player, :reveal_counter
+  attr_accessor :game_board, :player, :reveal_counter, :board_size, :bomb_number
 
-  def initialize(player)
-    @game_board = Board.new
+  def initialize(player, board_size, bomb_number)
+    @board_size = board_size
+    @bomb_number = bomb_number
+    @game_board = Board.new(board_size, bomb_number)
     @player = Player.new(player)
     @reveal_counter = 0
   end
@@ -99,24 +103,30 @@ class Game
       display
 
       index_array = player.get_position
-      action_input = player.get_action
+      action = player.get_action
 
-      if action_input.downcase == "f"
-        game_board[index_array].flag == true ? false : true
-      elsif action_input.downcase == "r"
-      else
-        puts "Wrong input"
-        next
-      end
-
-      game_over? if check_position(index_array) == 1 && game_board[index_array].bomb
+      check_input(index_array, action)
     end
 
     puts "Congrats, you found all the mines."
   end
 
+  def check_input(index_array, action_input)
+    if action_input.downcase == "f"
+      flag = game_board[index_array].flag
+
+      flag ? flag = false : flag = true
+      run
+    elsif action_input.downcase == "r"
+      game_over? if check_position(index_array) == 1 && game_board[index_array].bomb
+    else
+      puts "Wrong input"
+      run
+    end
+  end
+
   def won?
-    reveal_counter == 71
+    reveal_counter == (board_size ** 2) - bomb_number
   end
 
   def game_over?
@@ -150,7 +160,6 @@ class Game
         neighbors.each { |neighbor| check_position(neighbor) }
       end
 
-      byebug
       @reveal_counter += 1
     end
   end
@@ -163,7 +172,7 @@ class Game
     end
 
     neighbor_array.select do |arr|
-      arr.all? { |el| el >= 0 && el <= 8 }
+      arr.all? { |el| el >= 0 && el <= (game_board.board_size - 1) }
     end
   end
 
@@ -191,5 +200,5 @@ class Game
 
 end
 
-game = Game.new('SJ')
-#game.run
+game = Game.new('SJ', 9, 10)
+game.run

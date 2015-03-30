@@ -40,12 +40,13 @@ end
 
 class TileNode
 
-  attr_accessor :reveal, :bomb, :flag
+  attr_accessor :reveal, :bomb, :flag, :value
 
   def initialize
     @reveal = false
     @bomb = false
     @flag = false
+    @value = 0
   end
 
 end
@@ -79,42 +80,62 @@ class Game
     [1, 1]
   ]
 
-  attr_accessor :game_board, :player
+  attr_accessor :game_board, :player, :reveal_counter
 
   def initialize(player)
     @game_board = Board.new
     @player = Player.new(player)
+    @reveal_counter = 0
   end
 
   def run
     until false
       index_array = player.get_position
 
-      game_over if check_position(index_array) == 1 && game_board[index_array].bomb
-
+      game_over? if check_position(index_array) == 1 && game_board[index_array].bomb
+      display
     end
   end
 
+  def win?
+    game_board.count
+
+  end
+
+  def game_over?
+    puts "You lose"
+  end
+
   def check_position(index_array)
+    bomb_counter = 0
 
     if game_board[index_array].reveal
-      puts "This position is already revealed."
+      return 0
     elsif game_board[index_array].bomb
       return 1
-    elsif game_board[index_array].reveal
-      neighbors = create_neighbors(row, col)
+    elsif game_board[index_array].reveal == false
+      neighbors = create_neighbors(index_array)
 
       neighbors.each do |neighbor|
-        check_position(neighbor)
+        bomb_counter += 1 if game_board[neighbor].bomb
+      end
+
+      if bomb_counter > 0
+        game_board[index_array].reveal = true
+        game_board[index_array].value = bomb_counter
+        return bomb_counter
+      else
+        game_board[index_array].reveal = true
+        neighbors.each { |neighbor| check_position(neighbor) }
       end
     end
   end
 
-  def create_neighbors(row, col)
+  def create_neighbors(index_array)
     neighbor_array = Array.new(8) { Array.new(2) }
 
     NEIGHBORS.each_with_index do |arr, idx|
-      neighbor_array[idx] = [arr[0] + row, arr[1] + col]
+      neighbor_array[idx] = [arr[0] + index_array[0], arr[1] + index_array[1]]
     end
 
     neighbor_array.select do |arr|
@@ -123,7 +144,6 @@ class Game
   end
 
   def render
-    #byebug
     game_board.board.map do |array|
       array.map do |tile|
         if tile.reveal == false
@@ -132,6 +152,8 @@ class Game
           tile = :f
         elsif tile.reveal && tile.bomb
           tile = :b
+        elsif tile.value > 0
+          tile = tile.value
         else
           tile = :o
         end
@@ -141,14 +163,6 @@ class Game
 
   def display
     puts render
-  end
-
-  def my_map(&prc)
-    new_array = []
-    self.each do |el|
-      new_array << prc.call(el)
-    end
-    new_array
   end
 
 end
